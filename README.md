@@ -25,6 +25,9 @@ non-belonging if it was created by other models (e.g., $\mathcal{M}_2$ in the fo
 # Environment
 see requirements.txt
 
+# Pre-trained Generative Models
+For DCGAN, the pretrained model can be found in "dcgan_weights". Regarding the consistency model, pretrained models can be downloaded from https://github.com/openai/consistency_models; they are not directly uploaded in this repository due to their large file sizes. The remaining pretrained models will be downloaded automatically.
+
 # Reverse-engineering
 To conduct reverse-engineering on the belonging images:
 ```bash
