@@ -90,7 +90,6 @@ def cm_inference(args_model_diffusion_tuple,noise):
     else:
         sampler_args = {}
 
-    #print("x_T.shape:",x_T.shape)
     x_0 = sample_fn(
         denoiser,
         x_T,
