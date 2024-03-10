@@ -17,11 +17,7 @@ def text2img_get_init_image(args):
         if args.sd_prompt:
             prompt = args.sd_prompt
         else:
-            #prompt = "A silver mech horse running in a dark valley, in the night, high-definition picture, unreal engine, cyberpunk"
             prompt = "A cute shiba on the grass"
-        #prompt = "Dinning furniture for sale"
-        #prompt = "Incoming: New Products from YSL, Maybelline, and more!"
-        #prompt = "A cute shiba"
         image,latents = args.cur_model(prompt, num_inference_steps=50, guidance_scale=7.5,get_latents=True)
         image = image.images[0]
         image = transforms.PILToTensor()(image).cuda()/255
@@ -112,7 +108,6 @@ def get_image0(args):
             
             save_img_tensor(image0,"image0.png")
 
-
     if args.input_selection_model_type != None:
         another_model = get_model(args.input_selection_model_type,args.input_selection_model_path,args)
         with torch.no_grad():
@@ -126,7 +121,6 @@ def get_image0(args):
             gt_noise = another_model_noise
 
     if args.input_selection_url != None:
-        #url_img = cv2.imread(args.input_selection_url)
         readFlag = cv2.IMREAD_COLOR
         resp = urlopen(args.input_selection_url)
         url_img = np.asarray(bytearray(resp.read()), dtype="uint8")
@@ -135,7 +129,6 @@ def get_image0(args):
         b,g,r = cv2.split(url_img)
         url_img = cv2.merge([r, g, b])
         url_img = cv2.resize(url_img, (512,512), interpolation=cv2.INTER_AREA)
-        #shiba_img = cv2.resize(shiba_img, (32,32), interpolation=cv2.INTER_AREA)
         print(url_img.shape)
         url_img_show = Image.fromarray(url_img)
         url_img_show.save("url_img_show.jpg")
@@ -162,12 +155,6 @@ def get_image0(args):
         image0 = transforms.Resize(height)(image0)
         save_img_tensor(image0,"image0_sd_not_generated.png")
 
-    '''image0 = transforms.ToPILImage()(image0.squeeze(0).detach().cpu())
-    image0.save("image0_beforefiler.jpg")
-    image0 = pilgram._1977(image0)
-    image0.save("image0_afterfiler.jpg")
-    image0 = transforms.PILToTensor()(image0).unsqueeze(0).cuda().float()/255'''
-    
     if args.model_type == "ddpm_cifar10":
         imsize = 32
     elif args.model_type == "dcgan_cifar10":
