@@ -1,6 +1,6 @@
 # RONAN
 
-This repository is the source code for "Where Did I Come From? Origin Attribution of AI-Generated Images".
+This repository is the source code for ["Where Did I Come From? Origin Attribution of AI-Generated Images"](https://openreview.net/pdf?id=g8bjq0qxOl).
 
 Image generation techniques have been gaining increasing attention recently, but
 concerns have been raised about the potential misuse and intellectual property (IP)
