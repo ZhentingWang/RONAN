@@ -77,18 +77,6 @@ def get_image0(args):
         image0 = imagenet_img
         save_img_tensor(image0,"image0_imagenet.png")
 
-    if args.input_selection == "use_shiba_image0":
-        shiba_img = cv2.imread("shiba_images.jpg")
-        b,g,r = cv2.split(shiba_img)
-        shiba_img = cv2.merge([r, g, b])
-        shiba_img = cv2.resize(shiba_img, (512,512), interpolation=cv2.INTER_AREA)
-        #shiba_img = cv2.resize(shiba_img, (32,32), interpolation=cv2.INTER_AREA)
-        shiba_img_show = Image.fromarray(shiba_img)
-        shiba_img_show.save("shiba_img_show.jpg")
-        shiba_img = shiba_img/255
-        shiba_img = torch.from_numpy(shiba_img).cuda().clamp(0, 1).permute(2,0,1).unsqueeze(0).float()
-        image0 = shiba_img
-
     if args.input_selection == "use_generated_image0":
         with torch.no_grad():
             if args.model_type in ["sd"]:
