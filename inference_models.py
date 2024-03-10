@@ -61,8 +61,6 @@ def from_noise_to_image(args,model,noise,model_type):
     elif model_type in ["sd_unet"]:
         image = model.half_unet2output(noise[0],noise[1])
     elif "cm" in model_type:
-        #if noise.shape[0]==1:
-        #    noise = noise.expand(2,noise.shape[1],noise.shape[2],noise.shape[3])
         image = cm_inference(model,noise)
     return image
 
@@ -120,30 +118,6 @@ def get_model(model_type,model_path,args):
         args.vae_t_std = t_std
 
     elif "cm" in model_type:
-        
-        '''def cm_create_argparser(parser):
-            defaults = dict(
-                training_mode="edm",
-                generator="determ",
-                clip_denoised=True,
-                num_samples=10000,
-                batch_size=16,
-                sampler="heun",
-                s_churn=0.0,
-                s_tmin=0.0,
-                s_tmax=float("inf"),
-                s_noise=1.0,
-                steps=40,
-                model_path="",
-                seed=42,
-                ts="",
-            )
-            defaults.update(model_and_diffusion_defaults())
-            add_dict_to_argparser(parser, defaults)
-            return parser'''
-        
-        #parser_cm = argparse.ArgumentParser()
-        #args_cm = cm_create_argparser(parser_cm).parse_args()
 
         defaults = dict(
             training_mode="edm",
@@ -203,10 +177,7 @@ def get_model(model_type,model_path,args):
             distillation = True
         else:
             distillation = False
-        # cm_model, diffusion = create_model_and_diffusion(
-        #     **args_to_dict(args_cm, model_and_diffusion_defaults().keys()),
-        #     distillation=distillation,
-        # )
+
         cm_model, diffusion = create_model_and_diffusion(
             **args_to_dict_(args_cm, model_and_diffusion_defaults().keys()),
             distillation=distillation,
@@ -231,12 +202,9 @@ def get_model(model_type,model_path,args):
         cur_model = (args_cm, cm_model, diffusion)
 
     elif model_type in ["sd","sd_unet"]:
-        #model_id = "runwayml/stable-diffusion-v1-5"
-        #model_id = "stabilityai/stable-diffusion-2"
-        #model_id = "hf-internal-testing/tiny-stable-diffusion-torch"
+
         model_id = "stabilityai/stable-diffusion-2-base"
-        #model_id = "OFA-Sys/small-stable-diffusion-v0"
-        
+
         cur_model = StableDiffusionPipeline.from_pretrained(model_id,torch_dtype=torch.float32).to("cuda")
         #sd = StableDiffusionPipeline.from_pretrained(model_id,torch_dtype=torch.float16).to("cuda")
         cur_model.unet.eval()
