@@ -32,7 +32,6 @@ image0, gt_noise = get_image0(args)
 image0 = image0.detach()
 init_noise = get_init_noise(args,args.model_type,bs=args.bs)
 
-
 init_noise_cal_norm = get_init_noise(args,args.model_type,bs=200)
 print("init_noise_cal_norm.shape:",init_noise_cal_norm.shape)
 norm_list = []
@@ -42,12 +41,6 @@ for i in range(200):
     norm_list.append(norm)
 avg_norm = sum(norm_list)/len(norm_list)
 print("avg_norm:",avg_norm)
-#print(init_noise_cal_norm.norm(-1).norm(-1).norm(-1).mean())
-
-#print(gt_noise)
-#init_noise = init_noise[0].unsqueeze(0)
-#init_noise = gt_noise + torch.randn([1, args.cur_model.z_dim]).cuda()
-#exit()
 
 if args.model_type in ["sd"]:
     cur_noise = torch.nn.Parameter(torch.tensor(init_noise)).cuda()
@@ -56,15 +49,11 @@ elif args.model_type in ["sd_unet"]:
     args.cur_model.unet.eval()
     args.cur_model.vae.eval()
     cur_noise_0 = torch.nn.Parameter(torch.tensor(init_noise[0])).cuda()
-    #cur_noise_1 = torch.nn.Parameter(torch.tensor(init_noise[1])).cuda()
     optimizer = torch.optim.Adam([cur_noise_0], lr=args.lr)
-    #cur_noise_1.requires_grad = False
 else:
     cur_noise = torch.nn.Parameter(torch.tensor(init_noise)).cuda()
     optimizer = torch.optim.Adam([cur_noise], lr=args.lr)
-    #optimizer = torch.optim.RAdam([cur_noise], lr=args.lr)
-    #optimizer = torch.optim.SGD([cur_noise], lr=args.lr, momentum=0.9)
-
+    
 if args.distance_metric == "l1":
     criterion = torch.nn.L1Loss(reduction='none')
 elif args.distance_metric == "l2":
@@ -75,12 +64,8 @@ elif args.distance_metric == "psnr":
     criterion = psnr
 elif args.distance_metric == "lpips":
     criterion = lpips_fn
-
-#step_schedule = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer,T_max=20,eta_min=0.0004)
-#step_schedule = torch.optim.lr_scheduler.StepLR(optimizer, 1500, gamma=0.5, last_epoch=-1)
-
+    
 import time
-
 args.measure = 9999
 
 if args.mixed_precision:
@@ -129,21 +114,15 @@ for i in range(args.num_iter):
         scaler.scale(loss).backward()
         scaler.step(optimizer)
         scaler.update()
-        #step_schedule.step()
     else:
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        #step_schedule.step()
 
-    #print(gt_noise)
     if gt_noise is not None:
         noise_distance = torch.nn.MSELoss(reduction='none')(cur_noise,gt_noise)
-        #print(gt_noise.shape)
-        #print(list(range(1,len(gt_noise.shape))))
         print("gt_noise.norm():",gt_noise[0].norm())
         print("noise_distance L2:",noise_distance.mean(-1).mean(-1).mean(-1))
-        #print("noise_distance L2:",noise_distance.mean(-1))
         print("cur_noise.norm():",cur_noise[0].norm())
 
     end_time = time.time()
