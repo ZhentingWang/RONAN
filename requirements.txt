@@ -71,6 +71,7 @@ networkx==3.0
 ninja==1.11.1
 nltk==3.8.1
 numpy==1.23.5
+numba==0.57.1
 nvidia-cublas-cu11==11.10.3.66
 nvidia-cuda-nvrtc-cu11==11.7.99
 nvidia-cuda-runtime-cu11==11.7.99

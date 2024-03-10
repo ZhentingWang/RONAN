@@ -13,7 +13,7 @@ from inference_models import get_init_noise, get_model,from_noise_to_image
 import pilgram
 def text2img_get_init_image(args):
     
-    if args.model_type in ["sd","sd_unet"]:
+    if args.model_type in ["sd"]:
         if args.sd_prompt:
             prompt = args.sd_prompt
         else:
@@ -21,7 +21,6 @@ def text2img_get_init_image(args):
         image,latents = args.cur_model(prompt, num_inference_steps=50, guidance_scale=7.5,get_latents=True)
         image = image.images[0]
         image = transforms.PILToTensor()(image).cuda()/255
-        print("sd init image max:",image.max())
     
     return image,latents
 
@@ -29,7 +28,6 @@ def get_image0(args):
     gt_noise = None
     if args.input_selection == "use_stl10_image0":
         stl10_np = np.load("./data/stl10/train.npz")['x']
-        print(stl10_np.shape)
         args.dataset_index = random.randint(0, 4999)
         if args.dataset_index:
             stl10_img = stl10_np[args.dataset_index]
@@ -68,7 +66,6 @@ def get_image0(args):
         class_dir_list = os.listdir(imagenet_dir)
         rnd_index = random.randint(0,len(class_dir_list)-1)
         class_dir = imagenet_dir+class_dir_list[rnd_index]+"/"
-        print(class_dir)
         png_list = os.listdir(class_dir)
         rnd_index = random.randint(0,len(png_list)-1)
         png_file = class_dir+png_list[rnd_index]
@@ -86,7 +83,6 @@ def get_image0(args):
         shiba_img = cv2.merge([r, g, b])
         shiba_img = cv2.resize(shiba_img, (512,512), interpolation=cv2.INTER_AREA)
         #shiba_img = cv2.resize(shiba_img, (32,32), interpolation=cv2.INTER_AREA)
-        print(shiba_img.shape)
         shiba_img_show = Image.fromarray(shiba_img)
         shiba_img_show.save("shiba_img_show.jpg")
         shiba_img = shiba_img/255
@@ -95,15 +91,14 @@ def get_image0(args):
 
     if args.input_selection == "use_generated_image0":
         with torch.no_grad():
-            if args.model_type in ["sd","sd_unet"]:
+            if args.model_type in ["sd"]:
                 image0,gt_noise = text2img_get_init_image(args)
-                #gt_noise = None
             elif "cm" in args.model_type:
-                gt_noise = get_init_noise(args,args.model_type,bs=args.bs)[0].unsqueeze(0).repeat(args.bs,1,1,1)
+                gt_noise = get_init_noise(args,args.model_type,args.cur_model,bs=args.bs)[0].unsqueeze(0).repeat(args.bs,1,1,1)
                 image0 = from_noise_to_image(args,args.cur_model,gt_noise,args.model_type)
                 save_img_tensor(image0,"image0_cm_samenoise.png")
             else:
-                gt_noise = get_init_noise(args,args.model_type)[0].unsqueeze(0)
+                gt_noise = get_init_noise(args,args.model_type,args.cur_model)[0].unsqueeze(0)
                 image0 = from_noise_to_image(args,args.cur_model,gt_noise,args.model_type)
             
             save_img_tensor(image0,"image0.png")
@@ -112,10 +107,10 @@ def get_image0(args):
         another_model = get_model(args.input_selection_model_type,args.input_selection_model_path,args)
         with torch.no_grad():
             if "cm" in args.input_selection_model_type:
-                another_model_noise = get_init_noise(args,args.input_selection_model_type,bs=args.bs)
+                another_model_noise = get_init_noise(args,args.input_selection_model_type,another_model,bs=args.bs)
                 image0 = from_noise_to_image(args,another_model,another_model_noise,args.input_selection_model_type)[0]
             else:
-                another_model_noise = get_init_noise(args,args.input_selection_model_type,bs=1)
+                another_model_noise = get_init_noise(args,args.input_selection_model_type,another_model,bs=1)
                 image0 = from_noise_to_image(args,another_model,another_model_noise,args.input_selection_model_type)
 
             gt_noise = another_model_noise
@@ -129,7 +124,6 @@ def get_image0(args):
         b,g,r = cv2.split(url_img)
         url_img = cv2.merge([r, g, b])
         url_img = cv2.resize(url_img, (512,512), interpolation=cv2.INTER_AREA)
-        print(url_img.shape)
         url_img_show = Image.fromarray(url_img)
         url_img_show.save("url_img_show.jpg")
         url_img = url_img/255
@@ -142,14 +136,13 @@ def get_image0(args):
         shiba_img = cv2.merge([r, g, b])
         shiba_img = cv2.resize(shiba_img, (512,512), interpolation=cv2.INTER_AREA)
         #shiba_img = cv2.resize(shiba_img, (32,32), interpolation=cv2.INTER_AREA)
-        print(shiba_img.shape)
         shiba_img_show = Image.fromarray(shiba_img)
         shiba_img_show.save("input_selection_name_img_show3.jpg")
         shiba_img = shiba_img/255
         shiba_img = torch.from_numpy(shiba_img).cuda().clamp(0, 1).permute(2,0,1).unsqueeze(0).float()
         image0 = shiba_img
 
-    if args.input_selection != "use_generated_image0" and args.model_type in ["sd","sd_unet"]:
+    if args.input_selection != "use_generated_image0" and args.model_type in ["sd"]:
         height = args.cur_model.unet.config.sample_size * args.cur_model.vae_scale_factor
         width = args.cur_model.unet.config.sample_size * args.cur_model.vae_scale_factor
         image0 = transforms.Resize(height)(image0)
@@ -165,7 +158,7 @@ def get_image0(args):
         imsize = 32
     elif "cm" in args.model_type:
         imsize = 64
-    elif args.model_type in ["sd","sd_unet"]:
+    elif args.model_type in ["sd"]:
         imsize = 512
     
     image0 = transforms.Resize((imsize,imsize))(image0)

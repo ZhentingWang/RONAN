@@ -8,31 +8,24 @@ import pickle
 from pl_bolts.models.autoencoders import VAE
 from diffusers import StableDiffusionPipeline
 from cm_inference import cm_inference
-from cm.script_util import model_and_diffusion_defaults,create_model_and_diffusion,add_dict_to_argparser,args_to_dict,args_to_dict_
+from cm.script_util import model_and_diffusion_defaults,create_model_and_diffusion,args_to_dict_
 from cm.random_util import get_generator
 import argparse
 
-def get_init_noise(args,model_type,bs=1):
+def get_init_noise(args,model_type,model,bs=1):
     if model_type in ["ddpm_cifar10"]:
-        init_noise = torch.randn(bs, args.cur_model.unet.in_channels, args.cur_model.unet.sample_size, args.cur_model.unet.sample_size).cuda()
+        init_noise = torch.randn(bs, model.unet.in_channels, model.unet.sample_size, model.unet.sample_size).cuda()
     elif model_type in ["dcgan_cifar10"]:
-        init_noise = torch.randn(bs, args.cur_model.nz, 1, 1).cuda()
+        init_noise = torch.randn(bs, model.nz, 1, 1).cuda()
     elif model_type in ["styleganv2ada_cifar10"]:
-        init_noise = torch.randn([bs, args.cur_model.z_dim]).cuda()
+        init_noise = torch.randn([bs, model.z_dim]).cuda()
     elif model_type in ["vae_cifar10"]:
-        init_noise = torch.randn([bs, args.cur_model.latent_dim]).cuda()
+        init_noise = torch.randn([bs, model.latent_dim]).cuda()
     elif model_type in ["sd"]:
-        height = args.cur_model.unet.config.sample_size * args.cur_model.vae_scale_factor
-        width = args.cur_model.unet.config.sample_size * args.cur_model.vae_scale_factor
-        init_noise = torch.randn([bs, args.cur_model.unet.in_channels, height // args.cur_model.vae_scale_factor, width // args.cur_model.vae_scale_factor]).cuda()
-    elif model_type in ["sd_unet"]:
-        height = args.cur_model.unet.config.sample_size * args.cur_model.vae_scale_factor
-        width = args.cur_model.unet.config.sample_size * args.cur_model.vae_scale_factor
-        init_noise_0 = torch.randn([bs, args.cur_model.unet.in_channels, height // args.cur_model.vae_scale_factor, width // args.cur_model.vae_scale_factor]).cuda()
-        init_noise_text = torch.cat([torch.randn(args.cur_model.prompt_embeds_shape)] * bs).cuda()
-        init_noise = (init_noise_0,init_noise_text)
+        height = model.unet.config.sample_size * model.vae_scale_factor
+        width = model.unet.config.sample_size * model.vae_scale_factor
+        init_noise = torch.randn([bs, model.unet.in_channels, height // model.vae_scale_factor, width // model.vae_scale_factor]).cuda()
     elif "cm" in model_type:
-        #init_noise = args.generator_.randn(*(args.batch_size, 3, args.image_size, args.image_size)).cuda()
         init_noise = torch.randn(*(bs, 3, 64, 64)).cuda()
 
     return init_noise
@@ -43,23 +36,17 @@ def from_noise_to_image(args,model,noise,model_type):
     elif model_type in ["dcgan_cifar10"]:
         image = model.input2output(noise)
         image = transforms.Resize(32)(image)
-        print(image.shape)
     elif model_type in ["styleganv2ada_cifar10"]:
         label = torch.zeros([noise.shape[0], model.c_dim]).cuda()
         image = model(noise, label, noise_mode='none')
         image = (image / 2 + 0.5).clamp(0, 1)
         image = transforms.Resize(32)(image)
-        print(image.shape)
     elif model_type in ["vae_cifar10"]:
         image = model.decoder(noise)
         image = image*args.vae_t_std + args.vae_t_mean
         image = image.clamp(0, 1)
-        print(image.min())
-        print(image.max())
     elif model_type in ["sd"]:
         image = model.latent2output(noise)
-    elif model_type in ["sd_unet"]:
-        image = model.half_unet2output(noise[0],noise[1])
     elif "cm" in model_type:
         image = cm_inference(model,noise)
     return image
@@ -92,7 +79,6 @@ def get_model(model_type,model_path,args):
             G = pickle.load(fp)['G_ema'].cuda()  # torch.nn.Module
         cur_model = G.eval()
         z = torch.randn([args.bs, cur_model.z_dim]).cuda()    # latent codes
-        print(cur_model.c_dim)
         label = torch.zeros([args.bs, cur_model.c_dim]).cuda()                              # class labels (not used in this example)
         class_idx = 9
         label[:, class_idx] = 1
@@ -201,7 +187,7 @@ def get_model(model_type,model_path,args):
 
         cur_model = (args_cm, cm_model, diffusion)
 
-    elif model_type in ["sd","sd_unet"]:
+    elif model_type in ["sd"]:
 
         model_id = "stabilityai/stable-diffusion-2-base"
 
