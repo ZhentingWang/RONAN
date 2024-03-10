@@ -32,8 +32,7 @@ For DCGAN, the pretrained model can be found in "dcgan_weights". Regarding the c
 
 * For CIFAR-10 and STL-10 dataset, you can download the corresponding .npy file in https://drive.google.com/drive/folders/1Q-Rbql0tc8rtp2QVTx8mq3_VZXsVDNx0.
 * For ImageNet dataset, you can download it in https://www.image-net.org.
-
-Please put the downloaded data files in the folder "data".
+* Also, modify the line 30,42,44,65 of inference_image0.py to match the corresponding data directory.
 
 # Reverse-engineering
 To conduct reverse-engineering on the belonging images:
