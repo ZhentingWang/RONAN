@@ -22,6 +22,9 @@ non-belonging if it was created by other models (e.g., $\mathcal{M}_2$ in the fo
 <img src=./image/intro.png width=55% />
 </div>
 
+# News
+Please check our further work for improving the origin attribution performance on the state-of-the-art latent generative models (["How to Trace Latent Generative Model Generated Images without Artificial Watermark?"](https://github.com/ZhentingWang/LatentTracer/tree/main)).
+
 # Environment
 see requirements.txt
 
